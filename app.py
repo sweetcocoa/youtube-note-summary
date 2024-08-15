@@ -27,7 +27,7 @@ def get_processed_links():
                 {
                     "video_id": video_id,
                     "filename": filename,
-                    "url": f"https://youtu.be/{video_id}",
+                    "url": video_id,
                 }
             )
     print(f"Processed summaries: {summaries}")  # Debug print

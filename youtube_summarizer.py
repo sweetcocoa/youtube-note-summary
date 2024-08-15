@@ -111,28 +111,49 @@ def create_summary(transcript, video_id):
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an expert at creating concise, informative study notes from video transcripts. Your notes should be well-structured with major headings and subheadings. Provide the summary in Korean.",
+                    "content": "You are an expert at creating concise, informative study notes from video transcripts. Your notes should be well-structured with major headings and subheadings. Provide the note in Korean.",
                 },
                 {
                     "role": "user",
-                    "content": f"""Please create summary notes in Korean from the following transcript. Follow these guidelines:
+                    "content": f"""다음 트랜스크립트를 바탕으로 학습 노트를 한국어로 작성해주세요. 아래 지침을 따라주세요:
 
-1. At the beginning of the notes, write a brief summary sentence about the entire video and what can be learned from it.
-2. Organize the notes with main topics and subtopics.
-3. Use markdown formatting for headings and subheadings.
-4. For each subheading, include a timestamped YouTube link that corresponds to the content of that subheading.
-5. Use the following format for the timestamped links: [▶️](https://youtu.be/{video_id}?t=HH:MM:SS)
-   Replace HH:MM:SS with the exact timestamp as it appears in the transcript (e.g., 00:03:18).
-6. Place the timestamped link immediately after each subheading.
-7. Ensure you use the exact timestamp from the transcript, do not attempt to calculate or convert the time.
-8. When summarizing, use complete sentences with proper predicates rather than short phrases or bullet points. Provide detailed explanations instead of brief answers.
+1. 노트 시작 부분에 영상 전체에 대한 간단한 요약 문장과 이 영상에서 배울 수 있는 점을 작성하세요.
+2. 마크다운 형식을 사용하세요.
+3. 각 소제목 아래에 해당 내용의 유튜브 타임스탬프 링크를 포함하세요.
+4. 타임스탬프 링크는 다음 형식을 사용하세요: [▶️](https://youtu.be/{video_id}?t=HH:MM:SS)
+   HH:MM:SS를 트랜스크립트에 나타난 정확한 타임스탬프로 교체하세요 (예: 00:03:18).
+5. 타임스탬프 링크는 각 소제목 바로 다음에 배치하세요.
+6. 트랜스크립트에 나온 정확한 타임스탬프를 사용하고, 시간을 계산하거나 변환하지 마세요.
+7. 각 소제목에 해당 섹션의 영상 내용을 서술형으로 상세히 서술하세요.
+8. 구체적인 정보를 포함한 문장을 작성하는 데 집중하세요. 예를 들어, 영상에서 주제 A에 대해 설명한다면, "영상에서 A에 대해 설명합니다"라고만 쓰지 마세요. 대신, 영상에서 A를 뭐라고 설명했는지를 작성하세요.
+9. 주어진 트랜스크립트가 프로그램에 의해 생성되었을 수 있으며, 발음이 비슷하지만 잘못된 단어가 포함될 수 있습니다. 잘못된 것 같은 단어를 발견하면 문맥에 맞는 비슷한 발음의 단어로 해석하세요.
+10. 다음 형식에 맞춰서 학습 노트를 작성하세요:
 
-Here's the transcript:
+# [제목]
+- [영상 전체 요약과 이 영상에서 배울 수 있는 점]
+
+## 1. [소제목]
+[▶️](https://youtu.be/{video_id}?t=HH:MM:SS)
+
+- [이 섹션의 내용을 완전한 문장으로 설명]
+- [필요한 만큼 불릿 포인트 사용]
+- [영상을 보지 않은 사람도 내용을 알 수 있을 만큼 자세히 작성]
+- [한 불릿에 한 문장씩 작성]
+
+.. (필요한 만큼 소제목 반복하여 사용.) .. 
+
+## [숫자]. [소제목]
+[▶️](https://youtu.be/{video_id}?t=HH:MM:SS)
+- [위와 마찬가지로 학습 노트 작성]
+- [최대한 많은 정보를 담을 수 있도록 자세히 작성]
+
+
+다음은 트랜스크립트입니다:
 
 {transcript_content}""",
                 },
             ],
-            max_tokens=3000,
+            max_tokens=5000,
         )
         return completion.choices[0].message.content
     except Exception as e:
@@ -167,7 +188,7 @@ def extract_frame(video_path, timestamp, output_folder):
     cap.set(cv2.CAP_PROP_POS_MSEC, timestamp * 1000)
     success, image = cap.read()
     if success:
-        output_path = os.path.join(output_folder, f"frame_{timestamp}.jpg")
+        output_path = os.path.join(output_folder, f"{timestamp}.jpg")
         cv2.imwrite(output_path, image)
         cap.release()
         return output_path
@@ -181,6 +202,9 @@ def add_thumbnails(summary_path, video_path):
 
     frame_folder = "frames"
     os.makedirs(frame_folder, exist_ok=True)
+
+    asset_folder = os.path.join(frame_folder, str(hash(summary_path)))
+    os.makedirs(asset_folder, exist_ok=True)
 
     def replace_link(match):
         url = match.group(1)
@@ -199,10 +223,10 @@ def add_thumbnails(summary_path, video_path):
             print(f"Warning: No timestamp found in URL: {url}")
             return match.group(0)
 
-        frame_filename = f"frame_{timestamp}.jpg"
-        frame_path = os.path.join(frame_folder, frame_filename)
-        if extract_frame(video_path, timestamp, frame_folder):
-            return f"\n[![Frame at {timestamp}s](/{frame_path})]({url})"
+        frame_filename = f"{timestamp}.jpg"
+        frame_path = os.path.join(asset_folder, frame_filename)
+        if extract_frame(video_path, timestamp, asset_folder):
+            return f"\n[![Frame at {timestamp}s](/{frame_path})]({url})\n"
         return match.group(0)
 
     pattern = r"\[▶️\]\((https://youtu\.be/[^)]+)\)"
@@ -258,13 +282,9 @@ def summarize_youtube_video(url, use_whisper=True):
 
 
 if __name__ == "__main__":
-    xx = "/home/sweetcocoa/wsl/workspace/sweet-youtube-summary/downloads/[주식] 드디어 배운 '재무제표' 읽는법(홍진경,슈카) [공부왕찐천재]_summary.md"
-    yy = "/home/sweetcocoa/wsl/workspace/sweet-youtube-summary/downloads/[주식] 드디어 배운 '재무제표' 읽는법(홍진경,슈카) [공부왕찐천재].mp4"
-    add_thumbnails(xx, yy)
-
-    # youtube_url = input("Enter the YouTube video URL: ")
-    # result = summarize_youtube_video(youtube_url)
-    # if result:
-    #     print(f"Summary created successfully. You can find it at: {result}")
-    # else:
-    #     print("Failed to create summary.")
+    youtube_url = input("Enter the YouTube video URL: ")
+    result = summarize_youtube_video(youtube_url)
+    if result:
+        print(f"Summary created successfully. You can find it at: {result}")
+    else:
+        print("Failed to create summary.")

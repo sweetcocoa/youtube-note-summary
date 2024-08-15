@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Summary</title>
+    <style>
+        body {
+            display: flex;
+            font-family: Arial, sans-serif;
+        }
+        .main-content {
+            flex: 2;
+            padding: 20px;
+        }
+        .sidebar {
+            flex: 1;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            width: 300px; /* Default width */
+        }
+        @media (max-width: 768px) {
+            img {
+                width: 100%; /* Full width on small screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <h1>Video Summary</h1>
+        <div>
+            {{ summary|safe }}
+        </div>
+        <a href="{{ url_for('index') }}">Back to Home</a>
+    </div>
+    <div class="sidebar">
+        <h2>Processed Videos</h2>
+        <ul>
+            {% for summary in summaries %}
+            <li><a href="{{ url_for('view_summary', filename=summary.filename) }}">{{ summary.url }}</a></li>
+            {% endfor %}
+        </ul>
+        {% if not summaries %}
+        <p>No videos processed yet.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

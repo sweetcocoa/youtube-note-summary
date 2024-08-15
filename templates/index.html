@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Summarizer</title>
+    <style>
+        body {
+            display: flex;
+            font-family: Arial, sans-serif;
+        }
+        .main-content {
+            flex: 2;
+            padding: 20px;
+        }
+        .sidebar {
+            flex: 1;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <h1>YouTube Video Summarizer</h1>
+        <form method="POST">
+            <input type="text" name="youtube_url" placeholder="Enter YouTube URL" required>
+            <br><br>
+            <label>
+                <input type="checkbox" name="use_whisper" checked>
+                Use Whisper for transcription (uncheck to use YouTube's transcript)
+            </label>
+            <br><br>
+            <input type="submit" value="Summarize">
+        </form>
+        {% if error %}
+        <p style="color: red;">{{ error }}</p>
+        {% endif %}
+    </div>
+    <div class="sidebar">
+        <h2>Processed Videos</h2>
+        <ul>
+            {% for summary in summaries %}
+            <li><a href="{{ url_for('view_summary', filename=summary.filename) }}">{{ summary.url }}</a></li>
+            {% endfor %}
+        </ul>
+        {% if not summaries %}
+        <p>No videos processed yet.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -8,4 +8,4 @@
 ![example](assets/view.png)
 
 
-![example2](assets/view2.png)
+![example2](assets/view2.jpg)
